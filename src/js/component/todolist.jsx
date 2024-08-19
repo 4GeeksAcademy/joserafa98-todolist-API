@@ -4,7 +4,8 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 const TodoList = () => {
     const [inputValue, setInputValue] = useState('');
-    const [tasks, setTasks] = useState([]); 
+    const [tasks, setTasks] = useState([]);
+    
 
     useEffect(() => {
         fetch("https://playground.4geeks.com/todo/users/joserafa98")
@@ -22,38 +23,57 @@ const TodoList = () => {
             .catch(error => console.error("Error fetching tasks:", error));
     }, []);
 
-    useEffect(() => {
-        if (tasks.length === 0) return; 
+    
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && inputValue.trim() !== '') {
+            const newTask = { label: inputValue, done: false };
+            setInputValue('');
 
-        const putData = {
-            method: "PUT",
-            body: JSON.stringify({ todos: tasks }), 
+     
+            const postData = {
+                method: "POST",
+                body: JSON.stringify(newTask),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            };
+
+            fetch("https://playground.4geeks.com/todo/todos/joserafa98/", postData)
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to create task");
+                    return response.json();
+                })
+                .then(data => {
+            
+                    setTasks(prevTasks => [...prevTasks, data]);
+                })
+                .catch(error => console.error("Error creating task:", error));
+        }
+    };
+
+
+    const deleteTask = (index) => {
+        const taskToDelete = tasks[index];
+        const updatedTasks = tasks.filter((_, i) => i !== index);
+        setTasks(updatedTasks);
+
+    
+        const deleteData = {
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
             }
         };
 
-        fetch("https://playground.4geeks.com/todo/users/joserafa98", putData)
+        fetch(`https://playground.4geeks.com/todo/users/joserafa98/todos/${taskToDelete.id}`, deleteData)
             .then(response => {
-                if (!response.ok) throw new Error("Failed to update tasks");
+                if (!response.ok) throw new Error("Failed to delete task");
                 return response.json();
             })
             .then(data => {
-                console.log("Tasks updated:", data);
+                console.log("Task deleted:", data);
             })
-            .catch(error => console.error("Error updating tasks:", error));
-    }, [tasks]);
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && inputValue.trim() !== '') {
-            setTasks([...tasks, { label: inputValue, done: false }]);
-            setInputValue('');
-        }
-    };
-    
-    const deleteTask = (index) => {
-        const updatedTasks = tasks.filter((_, i) => i !== index);
-        setTasks(updatedTasks);
+            .catch(error => console.error("Error deleting task:", error));
     };
 
     return (
@@ -86,4 +106,3 @@ const TodoList = () => {
 }
 
 export default TodoList;
-
