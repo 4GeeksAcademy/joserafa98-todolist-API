@@ -56,7 +56,6 @@ const TodoList = () => {
         const taskToDelete = tasks[index];
         const updatedTasks = tasks.filter((_, i) => i !== index);
         setTasks(updatedTasks);
-
     
         const deleteData = {
             method: "DELETE",
@@ -64,8 +63,8 @@ const TodoList = () => {
                 "Content-Type": "application/json"
             }
         };
-
-        fetch(`https://playground.4geeks.com/todo/users/joserafa98/todos/${taskToDelete.id}`, deleteData)
+    
+        fetch(`https://playground.4geeks.com/todo/todos/${taskToDelete.id}`, deleteData)
             .then(response => {
                 if (!response.ok) throw new Error("Failed to delete task");
                 return response.json();
@@ -75,6 +74,39 @@ const TodoList = () => {
             })
             .catch(error => console.error("Error deleting task:", error));
     };
+    
+    
+
+    const deleteAllTasks = () => {
+        if (tasks.length === 0) return;
+    
+       
+        const deletePromises = tasks.map(task => {
+            return fetch(`https://playground.4geeks.com/todo/todos/${task.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+        });
+    
+        Promise.all(deletePromises)
+            .then(responses => {
+                
+                const allSuccessful = responses.every(response => response.ok);
+                if (allSuccessful) {
+                    console.log("All tasks deleted successfully");
+                    setTasks([]); 
+                } else {
+                    console.error("Failed to delete some tasks");
+                }
+            })
+            .catch(error => {
+                console.error("Error deleting tasks:", error);
+            });
+    };
+    
+    
 
     return (
         <div className="container" id="todoList">
@@ -101,6 +133,7 @@ const TodoList = () => {
                 ))}
             </ul>
             <div className="todoList-footer">{tasks.length} tasks left</div>
+            <div><button type="button" className="btn btn-secondary" onClick={deleteAllTasks}> Delete All</button></div>
         </div>
     );
 }
